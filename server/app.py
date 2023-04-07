@@ -1,6 +1,7 @@
 from flask import Flask, request, make_response, jsonify
 from flask_cors import CORS
 from flask_migrate import Migrate
+import ipdb
 
 from models import db, Message
 
@@ -14,13 +15,48 @@ migrate = Migrate(app, db)
 
 db.init_app(app)
 
-@app.route('/messages')
+@app.route('/messages', methods = ['GET', 'POST'])
 def messages():
-    return ''
+    
+    if request.method == 'GET':
+        all_messages = Message.query.order_by(Message.created_at).all()
+        dict_messages = [m.to_dict() for m in all_messages]
+        return make_response(dict_messages,200)
+    elif request.method == 'POST':
 
-@app.route('/messages/<int:id>')
+        new_message = Message(
+            body = request.get_json()['body'],
+            username = request.get_json()['username']
+        )
+        db.session.add(new_message)
+        db.session.commit()
+        return make_response(new_message.to_dict(),201)
+
+@app.route('/messages/<int:id>', methods = ['GET', 'PATCH', 'DELETE'])
 def messages_by_id(id):
-    return ''
+
+    selected_entry = Message.query.filter(Message.id == id).one()
+
+    if request.method == 'GET':
+
+        return make_response(selected_entry.to_dict(), 200)
+
+    if request.method == 'PATCH':
+        
+        for key in request.get_json():
+            setattr(selected_entry, key, request.get_json()[key])
+
+        db.session.add(selected_entry)
+        db.session.commit()
+
+        return make_response(selected_entry.to_dict(),200)
+    
+    if request.method == 'DELETE':
+        pass
+
+
+    return 
+
 
 if __name__ == '__main__':
     app.run(port=5555)
