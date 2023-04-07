@@ -52,11 +52,11 @@ def messages_by_id(id):
         return make_response(selected_entry.to_dict(),200)
     
     if request.method == 'DELETE':
-        pass
+        
+        db.session.delete(selected_entry)
+        db.session.commit()
 
-
-    return 
-
+        return make_response({'message':'message deleted successfully'},200)
 
 if __name__ == '__main__':
     app.run(port=5555)
